@@ -68,13 +68,13 @@ DBLab_Project/
 
 ## Innovation Features
 
-### Innovation 1 — Ward Risk Heatmap
+### Innovation 1 - Ward Risk Heatmap
 SQL stored procedure computes a weighted risk score per ward daily. Exposed via `v_ward_heatmap` VIEW.
 
-### Innovation 2 — Auto-Escalation Trigger
+### Innovation 2 - Auto-Escalation Trigger
 `trg_detect_recurring` fires on every complaint INSERT. If 3+ same-category complaints appear in the same ward within 7 days, the system auto-creates a chronic_issue record and marks the complaint CRITICAL.
 
-### Innovation 3 — Citizen KPI Feedback Loop
+### Innovation 3 - Citizen KPI Feedback Loop
 `trg_feedback_on_resolve` fires when complaint status changes to Resolved. Sets `feedback_pending = 1`. Citizen submits rating → stored in complaint_feedback → aggregated in `v_department_kpi` VIEW.
 
 ---
