@@ -1,8 +1,8 @@
 # Local Government Complaint & Public Service Request Management System
-## Database Systems Lab — Semester Project
+## Database Systems Lab - Semester Project
 
 **Group Members:** Omer Zia | Yahya Usman  
-**Program & Group:** BSCS — Group A  
+**Program & Group:** BSCS - Group A  
 **Institution:** IMSciences  
 
 ---
