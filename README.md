@@ -8,7 +8,7 @@
 
 | Field | Details |
 |---|---|
-| **Group Members** | Omer Zia - [umarzia-git](https://github.com/umarzia-git) &nbsp;|&nbsp; Yahya Usman - [yahya-github](https://github.com/yahyausman) |
+| **Group Members** | Omer Zia - [umarzia-git](https://github.com/umarzia-git) &nbsp;\|&nbsp; Yahya Usman - [yahyausman](https://github.com/yahyausman) |
 | **Program & Group** | BSCS - Group A |
 | **Institution** | IMSciences |
 | **Course** | Database Systems Lab - Semester Project |
