@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CivicDesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#citizen" aria-label="CivicDesk">
+          <span class="brand-mark">CD</span>
+          <span>
+            <strong>CivicDesk</strong>
+            <small>Local service requests</small>
+          </span>
+        </a>
+
+        <nav class="portal-nav" aria-label="Portals">
+          <button class="active" type="button" data-portal-target="citizen">Citizen Portal</button>
+          <button type="button" data-portal-target="staff">Staff Portal</button>
+          <button type="button" data-portal-target="admin">Admin Portal</button>
+        </nav>
+
+        <div class="connection-card">
+          <span class="eyebrow">Data Source</span>
+          <strong id="sourceLabel">Checking</strong>
+          <small id="sourceDetail">Connecting to service</small>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="portalEyebrow">Citizen Portal</p>
+            <h1 id="portalTitle">File and Track Requests</h1>
+          </div>
+          <div class="topbar-actions">
+            <div class="search-wrap">
+              <label for="searchInput">Search</label>
+              <input id="searchInput" type="search" placeholder="Token, citizen, ward">
+            </div>
+            <button class="btn primary" id="refreshButton" type="button">Refresh</button>
+          </div>
+        </header>
+
+        <section class="portal active" id="citizen" data-portal="citizen">
+          <section class="work-grid">
+            <form class="panel span-4 intake-form" id="intake">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Citizen Desk</p>
+                  <h2>New Request</h2>
+                </div>
+              </div>
+              <label>
+                Citizen
+                <select id="citizenSelect" name="citizen_id" required></select>
+              </label>
+              <label>
+                Category
+                <select id="categorySelect" name="category_id" required></select>
+              </label>
+              <label>
+                Ward
+                <input id="wardInput" name="ward_no" type="text" placeholder="Ward-5">
+              </label>
+              <label>
+                Priority
+                <select name="priority">
+                  <option>Normal</option>
+                  <option>High</option>
+                  <option>CRITICAL</option>
+                </select>
+              </label>
+              <label>
+                Description
+                <textarea name="description" rows="5" placeholder="Describe the issue" required></textarea>
+              </label>
+              <button class="btn primary full" type="submit">Submit Request</button>
+              <p class="form-message" id="formMessage" role="status"></p>
+            </form>
+
+            <div class="panel span-8">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">My Requests</p>
+                  <h2>Tracking</h2>
+                </div>
+                <div class="field-inline">
+                  <label for="citizenTrackSelect">Citizen</label>
+                  <select id="citizenTrackSelect"></select>
+                </div>
+              </div>
+              <div class="request-grid" id="citizenRequests"></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="portal" id="staff" data-portal="staff">
+          <section class="metric-grid compact" aria-label="Staff metrics">
+            <article class="metric">
+              <span>Assigned</span>
+              <strong id="staffAssigned">0</strong>
+              <small>open requests</small>
+            </article>
+            <article class="metric danger">
+              <span>SLA</span>
+              <strong id="staffBreaches">0</strong>
+              <small>needs attention</small>
+            </article>
+            <article class="metric">
+              <span>Resolved</span>
+              <strong id="staffResolved">0</strong>
+              <small>completed</small>
+            </article>
+          </section>
+
+          <section class="work-grid">
+            <div class="panel span-12" id="complaints">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Staff Queue</p>
+                  <h2>Assigned Complaints</h2>
+                </div>
+                <div class="filter-row">
+                  <div class="field-inline">
+                    <label for="staffDeptSelect">Department</label>
+                    <select id="staffDeptSelect"></select>
+                  </div>
+                  <div class="segmented" role="tablist" aria-label="Status filter">
+                    <button class="active" type="button" data-status="All">All</button>
+                    <button type="button" data-status="Received">Received</button>
+                    <button type="button" data-status="In Progress">In Progress</button>
+                    <button type="button" data-status="Resolved">Resolved</button>
+                  </div>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Token</th>
+                      <th>Citizen</th>
+                      <th>Issue</th>
+                      <th>Ward</th>
+                      <th>Status</th>
+                      <th>Deadline</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="complaintsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="portal" id="admin" data-portal="admin">
+          <section class="metric-grid" aria-label="System metrics">
+            <article class="metric">
+              <span>Total</span>
+              <strong id="totalComplaints">0</strong>
+              <small>complaints filed</small>
+            </article>
+            <article class="metric">
+              <span>Open</span>
+              <strong id="openComplaints">0</strong>
+              <small>active requests</small>
+            </article>
+            <article class="metric danger">
+              <span>SLA</span>
+              <strong id="slaBreaches">0</strong>
+              <small>breaches</small>
+            </article>
+            <article class="metric">
+              <span>Rating</span>
+              <strong id="avgRating">0.0</strong>
+              <small>average score</small>
+            </article>
+          </section>
+
+          <section class="work-grid" id="performance">
+            <div class="panel span-6">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Departments</p>
+                  <h2>Performance</h2>
+                </div>
+              </div>
+              <div class="kpi-list" id="departmentKpi"></div>
+            </div>
+
+            <div class="panel span-6" id="risk">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Risk</p>
+                  <h2>Ward Heatmap</h2>
+                </div>
+              </div>
+              <div class="heatmap" id="wardHeatmap"></div>
+            </div>
+          </section>
+
+          <section class="work-grid">
+            <div class="panel span-7">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Recurring</p>
+                  <h2>Chronic Issues</h2>
+                </div>
+              </div>
+              <div class="issue-list" id="chronicIssues"></div>
+            </div>
+
+            <div class="panel span-5 model-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Schema</p>
+                  <h2>Data Model</h2>
+                </div>
+              </div>
+              <img src="/assets/erd" alt="Entity relationship diagram">
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <template id="statusActionTemplate">
+      <div class="status-action">
+        <select aria-label="Status">
+          <option>Received</option>
+          <option>In Progress</option>
+          <option>Resolved</option>
+          <option>Closed</option>
+        </select>
+        <button class="btn compact" type="button">Update</button>
+      </div>
+    </template>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  </body>
+</html>
