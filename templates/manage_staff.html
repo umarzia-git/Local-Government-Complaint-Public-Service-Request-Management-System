@@ -16,7 +16,7 @@
     {% if errors %}
     <ul class="error-list">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
     {% endif %}
-    <form method="POST">
+    <form method="POST" action="/admin/staff">
       <div class="form-group">
         <label class="form-label">Full Name <span class="req">*</span></label>
         <input type="text" name="full_name" class="form-control" placeholder="Staff Full Name" required>
@@ -56,7 +56,9 @@
     <div class="card-title"><i class="fas fa-users"></i> Current Staff ({{ staff_list|length }})</div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Name</th><th>Department</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+        <thead>
+          <tr><th>Name</th><th>Department</th><th>Role</th><th>Status</th><th>Joined</th><th>Action</th></tr>
+        </thead>
         <tbody>
           {% for s in staff_list %}
           <tr>
@@ -80,6 +82,26 @@
               {% endif %}
             </td>
             <td style="color:var(--muted);font-size:0.8rem;">{{ s.created_at.strftime('%d %b %Y') if s.created_at else '—' }}</td>
+            <td>
+              {% if s.staff_id != session.get('staff_id') %}
+                {% if s.is_active %}
+                  <form method="POST" action="/admin/staff/{{ s.staff_id }}/deactivate"
+                        onsubmit="return confirm('Deactivate {{ s.full_name }}? They will not be able to login.')">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                      <i class="fas fa-user-slash"></i> Remove
+                    </button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="/admin/staff/{{ s.staff_id }}/activate">
+                    <button type="submit" class="btn btn-success btn-sm">
+                      <i class="fas fa-user-check"></i> Restore
+                    </button>
+                  </form>
+                {% endif %}
+              {% else %}
+                <span style="color:var(--muted);font-size:0.78rem;">You</span>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
