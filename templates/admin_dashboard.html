@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — LGC Portal{% endblock %}
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+.kpi-table td { padding: 10px 16px; }
+.risk-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); min-width: 80px; display: inline-block; vertical-align: middle; overflow: hidden; }
+.risk-fill { height: 100%; border-radius: 3px; }
+.tab-bar { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+.tab-btn {
+  padding: 10px 18px; background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 0.88rem; font-weight: 600;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Admin <span class="gold">Dashboard</span></h1>
+    <p>System-wide overview · {{ session.get('staff_name') }}</p>
+  </div>
+  <a href="/admin/staff" class="btn btn-outline"><i class="fas fa-users"></i> Manage Staff</a>
+</div>
+
+<!-- KPI STRIP -->
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+  <div class="stat-card gold">
+    <div class="stat-number">{{ citizen_count }}</div>
+    <div class="stat-label">Registered Citizens</div>
+    <i class="fas fa-users stat-icon"></i>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-number">{{ open_count }}</div>
+    <div class="stat-label">Open Complaints</div>
+    <i class="fas fa-exclamation-circle stat-icon"></i>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-number">{{ chronic_count }}</div>
+    <div class="stat-label">Active Chronic Issues</div>
+    <i class="fas fa-radiation stat-icon"></i>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-number">{{ avg_rating }}</div>
+    <div class="stat-label">Avg. Satisfaction (★)</div>
+    <i class="fas fa-star stat-icon"></i>
+  </div>
+</div>
+
+<!-- CHARTS + HEATMAP -->
+<div class="grid-2" style="margin-bottom:1.5rem;">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-building"></i> Department KPIs</div>
+    <canvas id="deptChart" height="180"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="fas fa-map-marked-alt"></i> Ward Risk Heatmap (Top 10)</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ward</th><th>Open</th><th>SLA Breaches</th><th>Satisfaction</th><th>Risk Score</th></tr></thead>
+        <tbody>
+          {% for w in ward_heatmap %}
+          <tr>
+            <td>{{ w.ward_no }}</td>
+            <td>{{ w.open_complaints }}</td>
+            <td>{% if w.sla_breaches %}<span class="badge badge-critical">{{ w.sla_breaches }}</span>{% else %}0{% endif %}</td>
+            <td>{{ w.avg_satisfaction }}★</td>
+            <td>
+              <div class="risk-bar">
+                <div class="risk-fill" style="width:{{ [w.risk_score / 50 * 100, 100]|min }}%;
+                  background:{% if w.risk_score > 30 %}var(--rose){% elif w.risk_score > 15 %}var(--amber){% else %}var(--emerald){% endif %};"></div>
+              </div>
+              <span style="font-size:0.78rem;color:var(--muted);margin-left:8px;">{{ w.risk_score }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="card">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('complaints', this)">All Complaints</button>
+    <button class="tab-btn" onclick="switchTab('chronic', this)">Chronic Issues</button>
+    <button class="tab-btn" onclick="switchTab('kpi', this)">Dept. KPI Table</button>
+  </div>
+
+  <!-- COMPLAINTS TAB -->
+  <div class="tab-pane active" id="tab-complaints">
+    <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
+      <input type="text" id="searchInput" class="form-control" style="max-width:240px;" placeholder="🔍 Search token / citizen…" oninput="filterComplaints()">
+      <select id="filterStatusAdmin" class="form-control" style="width:160px;" onchange="filterComplaints()">
+        <option value="">All Statuses</option>
+        <option>Received</option><option>In Progress</option><option>Resolved</option><option>Closed</option>
+      </select>
+      <select id="filterPriority" class="form-control" style="width:150px;" onchange="filterComplaints()">
+        <option value="">All Priorities</option>
+        <option>Normal</option><option>High</option><option>CRITICAL</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table id="adminTable">
+        <thead>
+          <tr><th>Token</th><th>Citizen</th><th>Category</th><th>Dept</th><th>Ward</th><th>Status</th><th>Priority</th><th>Filed</th></tr>
+        </thead>
+        <tbody>
+          {% for c in complaints %}
+          <tr data-status="{{ c.status }}" data-priority="{{ c.priority }}" data-search="{{ c.token|lower }} {{ c.citizen_name|lower }}">
+            <td><span class="token-pill">{{ c.token }}</span></td>
+            <td>{{ c.citizen_name }}</td>
+            <td>{{ c.category_name }}</td>
+            <td>{{ c.dept_name }}</td>
+            <td>{{ c.ward_no }}</td>
+            <td>
+              {% if c.status == 'Received' %}<span class="badge badge-received">Received</span>
+              {% elif c.status == 'In Progress' %}<span class="badge badge-progress">In Progress</span>
+              {% elif c.status == 'Resolved' %}<span class="badge badge-resolved">Resolved</span>
+              {% else %}<span class="badge badge-closed">Closed</span>{% endif %}
+            </td>
+            <td>
+              {% if c.priority == 'CRITICAL' %}<span class="badge badge-critical">⚠ CRITICAL</span>
+              {% elif c.priority == 'High' %}<span class="badge badge-high">High</span>
+              {% else %}<span class="badge badge-normal">Normal</span>{% endif %}
+            </td>
+            <td style="color:var(--muted);font-size:0.8rem;">{{ c.filed_at.strftime('%d %b %Y') if c.filed_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CHRONIC TAB -->
+  <div class="tab-pane" id="tab-chronic">
+    {% if chronic_issues %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Category</th><th>Ward</th><th>Complaint Count</th><th>Detected</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for ci in chronic_issues %}
+          <tr>
+            <td>{{ ci.category_name }}</td>
+            <td>{{ ci.ward_no }}</td>
+            <td><span class="badge badge-critical">{{ ci.complaint_count }} reports</span></td>
+            <td style="color:var(--muted);font-size:0.82rem;">{{ ci.detected_at.strftime('%d %b %Y') if ci.detected_at else '—' }}</td>
+            <td><span class="badge badge-progress">Active</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="color:var(--muted);padding:2rem;text-align:center;">No active chronic issues detected. ✓</p>
+    {% endif %}
+  </div>
+
+  <!-- KPI TABLE TAB -->
+  <div class="tab-pane" id="tab-kpi">
+    <div class="table-wrap">
+      <table class="kpi-table">
+        <thead><tr><th>Department</th><th>Resolved</th><th>Feedback Count</th><th>Avg Rating</th><th>On-Time</th><th>On-Time %</th></tr></thead>
+        <tbody>
+          {% for d in dept_kpi %}
+          <tr>
+            <td><strong>{{ d.dept_name }}</strong></td>
+            <td>{{ d.total_resolved or 0 }}</td>
+            <td>{{ d.total_feedback or 0 }}</td>
+            <td>
+              {% if d.avg_rating %}
+              <span style="color:var(--gold);">{{ d.avg_rating }}★</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ d.resolved_on_time or 0 }}</td>
+            <td>
+              {% if d.on_time_pct %}
+              <span style="color:{% if d.on_time_pct >= 80 %}var(--emerald){% elif d.on_time_pct >= 50 %}var(--amber){% else %}var(--rose){% endif %};">
+                {{ d.on_time_pct }}%
+              </span>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Chart ──
+const deptLabels = [{% for d in dept_kpi %}"{{ d.dept_name }}"{% if not loop.last %},{% endif %}{% endfor %}];
+const deptData   = [{% for d in dept_kpi %}{{ d.total_resolved or 0 }}{% if not loop.last %},{% endif %}{% endfor %}];
+const deptRating = [{% for d in dept_kpi %}{{ d.avg_rating or 0 }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+new Chart(document.getElementById('deptChart'), {
+  type: 'bar',
+  data: {
+    labels: deptLabels,
+    datasets: [
+      { label: 'Resolved Complaints', data: deptData, backgroundColor: 'rgba(200,168,75,0.3)', borderColor: 'rgba(200,168,75,0.8)', borderWidth: 1.5, borderRadius: 6 },
+      { label: 'Avg Rating (×10)', data: deptRating.map(r => r*10), backgroundColor: 'rgba(16,185,129,0.2)', borderColor: 'rgba(16,185,129,0.7)', borderWidth: 1.5, borderRadius: 6 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    }
+  }
+});
+
+// ── Tabs ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Filter ──
+function filterComplaints() {
+  const search   = document.getElementById('searchInput').value.toLowerCase();
+  const status   = document.getElementById('filterStatusAdmin').value;
+  const priority = document.getElementById('filterPriority').value;
+  document.querySelectorAll('#adminTable tbody tr').forEach(row => {
+    const matchSearch   = !search   || row.dataset.search.includes(search);
+    const matchStatus   = !status   || row.dataset.status === status;
+    const matchPriority = !priority || row.dataset.priority === priority;
+    row.style.display = (matchSearch && matchStatus && matchPriority) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

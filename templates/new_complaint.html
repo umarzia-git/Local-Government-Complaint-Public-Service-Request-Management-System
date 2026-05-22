@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}File Complaint — LGC Portal{% endblock %}
+{% block extra_head %}
+<style>
+.cat-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+  gap: 0.75rem; margin-bottom: 1.25rem;
+}
+.cat-card {
+  border: 2px solid rgba(255,255,255,0.08); border-radius: 10px;
+  padding: 1rem; cursor: pointer; transition: all 0.2s;
+  background: rgba(255,255,255,0.03);
+}
+.cat-card:hover { border-color: rgba(200,168,75,0.3); background: rgba(200,168,75,0.04); }
+.cat-card.selected { border-color: var(--gold); background: rgba(200,168,75,0.08); }
+.cat-card h4 { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.cat-card p  { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+.cat-card .sla { font-size: 0.72rem; color: var(--gold); margin-top: 6px; font-weight: 600; }
+.char-counter { font-size: 0.75rem; color: var(--muted); text-align: right; margin-top: 4px; }
+.char-counter.warn { color: var(--amber); }
+</style>
+{% endblock %}
+{% block content %}
+<div style="max-width:780px;margin:0 auto;">
+  <div class="page-header">
+    <div>
+      <h1>File a Complaint</h1>
+      <p>Submit a public service complaint · Logged in as <span class="gold">{{ citizen.full_name }}</span></p>
+    </div>
+    <a href="/citizen/dashboard" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+  </div>
+
+  {% if errors %}
+  <ul class="error-list">
+    {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <div class="card">
+    <form method="POST" id="complaintForm">
+
+      <div class="form-group">
+        <label class="form-label">Select Category <span class="req">*</span></label>
+        <div class="cat-grid">
+          {% for cat in categories %}
+          <div class="cat-card{% if form.get('category_id')|string == cat.category_id|string %} selected{% endif %}"
+               onclick="selectCat({{ cat.category_id }}, {{ cat.dept_id }}, this)">
+            <input type="radio" name="category_id" value="{{ cat.category_id }}"
+                   id="cat_{{ cat.category_id }}" style="display:none"
+                   {% if form.get('category_id')|string == cat.category_id|string %}checked{% endif %}>
+            <h4>{{ cat.category_name }}</h4>
+            {% if cat.description %}<p>{{ cat.description[:60] }}{% if cat.description|length > 60 %}...{% endif %}</p>{% endif %}
+            <div class="sla">⏱ SLA: {{ cat.sla_hours }}h</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Department <span class="req">*</span></label>
+          <select name="dept_id" id="deptSelect" class="form-control" required>
+            <option value="">— Select Department —</option>
+            {% for dept in departments %}
+            <option value="{{ dept.dept_id }}"
+              {% if form.get('dept_id')|string == dept.dept_id|string %}selected{% endif %}>
+              {{ dept.dept_name }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="form-hint">Auto-filled when you pick a category</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ward Number <span class="req">*</span></label>
+          <input type="text" name="ward_no" class="form-control"
+                 placeholder="e.g. Ward-5"
+                 value="{{ form.get('ward_no', citizen.ward_no) }}" required>
+          <div class="form-hint">Pre-filled from your profile</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description <span class="req">*</span> (min 20 characters)</label>
+        <textarea name="description" id="descArea" class="form-control" rows="5"
+                  placeholder="Describe the issue in detail — location, severity, how long it has been ongoing…"
+                  required>{{ form.get('description','') }}</textarea>
+        <div class="char-counter" id="charCount">0 characters (minimum 20)</div>
+      </div>
+
+      <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;padding:13px;">
+          <i class="fas fa-paper-plane"></i> Submit Complaint
+        </button>
+        <a href="/citizen/dashboard" class="btn btn-outline" style="padding:13px 20px;">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function selectCat(catId, deptId, el) {
+  document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('cat_' + catId).checked = true;
+  // Auto-fill department
+  const sel = document.getElementById('deptSelect');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value == deptId) {
+      sel.selectedIndex = i; break;
+    }
+  }
+}
+
+const descArea  = document.getElementById('descArea');
+const charCount = document.getElementById('charCount');
+function updateCount() {
+  const len = descArea.value.length;
+  charCount.textContent = len + ' characters' + (len < 20 ? ' (minimum 20)' : ' ✓');
+  charCount.className = 'char-counter' + (len > 0 && len < 20 ? ' warn' : '');
+}
+descArea.addEventListener('input', updateCount);
+updateCount();
+</script>
+{% endblock %}

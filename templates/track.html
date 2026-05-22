@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Track Complaint — LGC Portal{% endblock %}
+{% block content %}
+<div style="max-width:700px;margin:3rem auto;">
+  <div style="text-align:center;margin-bottom:2.5rem;">
+    <div style="width:70px;height:70px;background:rgba(56,189,248,0.1);border:2px solid rgba(56,189,248,0.25);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 1rem;">🔍</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--text);">Track Your Complaint</h1>
+    <p style="color:var(--muted);margin-top:6px;">Enter your complaint token to see live status updates</p>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem;">
+    <form method="POST" style="display:flex;gap:0.75rem;align-items:flex-end;">
+      <div class="form-group" style="flex:1;margin:0;">
+        <label class="form-label">Complaint Token</label>
+        <input type="text" name="token" class="form-control"
+               placeholder="LGC-2026-XXXXX" style="font-family:'Syne',sans-serif;letter-spacing:1px;font-size:1rem;"
+               value="{{ request.form.get('token','') }}" required>
+        <div class="form-hint">Format: LGC-YYYY-XXXXX (issued when you filed)</div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="padding:12px 24px;white-space:nowrap;margin-bottom:1.25rem;">
+        <i class="fas fa-search"></i> Track
+      </button>
+    </form>
+  </div>
+
+  {% if complaint %}
+  <div class="card" style="margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem;">
+      <div>
+        <span class="token-pill" style="font-size:0.95rem;padding:6px 14px;">{{ complaint.token }}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        {% if complaint.status == 'Received' %}
+          <span class="badge badge-received" style="font-size:0.88rem;padding:6px 14px;">📥 Received</span>
+        {% elif complaint.status == 'In Progress' %}
+          <span class="badge badge-progress" style="font-size:0.88rem;padding:6px 14px;">⚙️ In Progress</span>
+        {% elif complaint.status == 'Resolved' %}
+          <span class="badge badge-resolved" style="font-size:0.88rem;padding:6px 14px;">✅ Resolved</span>
+        {% else %}
+          <span class="badge badge-closed" style="font-size:0.88rem;padding:6px 14px;">🔒 Closed</span>
+        {% endif %}
+        {% if complaint.priority == 'CRITICAL' %}<span class="badge badge-critical">⚠ CRITICAL</span>{% endif %}
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Category</div>
+        <div style="font-weight:600;">{{ complaint.category_name }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Department</div>
+        <div>{{ complaint.dept_name }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Ward</div>
+        <div>{{ complaint.ward_no }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Filed</div>
+        <div>{{ complaint.filed_at.strftime('%d %b %Y, %H:%M') if complaint.filed_at else '—' }}</div>
+      </div>
+    </div>
+    {% if logs %}
+    <hr class="divider">
+    <div class="card-title" style="margin-bottom:1rem;"><i class="fas fa-history"></i> Update History</div>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-dot"></div>
+        <div class="tl-title">Complaint Filed</div>
+        <div class="tl-meta">{{ complaint.filed_at.strftime('%d %b %Y, %H:%M') if complaint.filed_at else '' }}</div>
+      </div>
+      {% for log in logs %}
+      <div class="tl-item {% if log.new_status in ('Resolved','Closed') %}resolved{% endif %}">
+        <div class="tl-dot"></div>
+        <div class="tl-title">{{ log.old_status }} → {{ log.new_status }}</div>
+        <div class="tl-meta">{{ log.changed_at.strftime('%d %b %Y, %H:%M') if log.changed_at else '' }} · {{ log.staff_name }}</div>
+        {% if log.note %}<div class="tl-note">{{ log.note }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

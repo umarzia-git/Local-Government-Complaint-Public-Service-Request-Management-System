@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Complaint {{ complaint.token }} — LGC Portal{% endblock %}
+{% block content %}
+<div style="max-width:860px;margin:0 auto;">
+  <div class="page-header">
+    <div>
+      <h1>Complaint Detail</h1>
+      <p>Full history and current status of your complaint</p>
+    </div>
+    <a href="/citizen/dashboard" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Dashboard</a>
+  </div>
+
+  <!-- TOP INFO -->
+  <div class="grid-2" style="margin-bottom:1.5rem;">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-info-circle"></i> Complaint Info</div>
+      <table style="width:100%;font-size:0.88rem;">
+        <tr><td style="color:var(--muted);padding:6px 0;width:130px;">Token</td>
+            <td><span class="token-pill">{{ complaint.token }}</span></td></tr>
+        <tr><td style="color:var(--muted);padding:6px 0;">Category</td>
+            <td style="font-weight:500;">{{ complaint.category_name }}</td></tr>
+        <tr><td style="color:var(--muted);padding:6px 0;">Department</td>
+            <td>{{ complaint.dept_name }}</td></tr>
+        <tr><td style="color:var(--muted);padding:6px 0;">Ward</td>
+            <td>{{ complaint.ward_no }}</td></tr>
+        <tr><td style="color:var(--muted);padding:6px 0;">Filed At</td>
+            <td>{{ complaint.filed_at.strftime('%d %b %Y, %H:%M') if complaint.filed_at else '—' }}</td></tr>
+        {% if complaint.sla_deadline %}
+        <tr><td style="color:var(--muted);padding:6px 0;">SLA Deadline</td>
+            <td>{{ complaint.sla_deadline.strftime('%d %b %Y, %H:%M') }}</td></tr>
+        {% endif %}
+        {% if complaint.resolved_at %}
+        <tr><td style="color:var(--muted);padding:6px 0;">Resolved At</td>
+            <td style="color:var(--emerald);">{{ complaint.resolved_at.strftime('%d %b %Y, %H:%M') }}</td></tr>
+        {% endif %}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-signal"></i> Current Status</div>
+      <div style="text-align:center;padding:1rem 0;">
+        {% if complaint.status == 'Received' %}
+          <div style="font-size:3rem;margin-bottom:0.75rem;">📥</div>
+          <span class="badge badge-received" style="font-size:1rem;padding:8px 20px;">Received</span>
+          <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;">Your complaint has been logged and is awaiting assignment.</p>
+        {% elif complaint.status == 'In Progress' %}
+          <div style="font-size:3rem;margin-bottom:0.75rem;">⚙️</div>
+          <span class="badge badge-progress" style="font-size:1rem;padding:8px 20px;">In Progress</span>
+          <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;">Staff are actively working on resolving your issue.</p>
+        {% elif complaint.status == 'Resolved' %}
+          <div style="font-size:3rem;margin-bottom:0.75rem;">✅</div>
+          <span class="badge badge-resolved" style="font-size:1rem;padding:8px 20px;">Resolved</span>
+          <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;">Your complaint has been resolved. Please leave feedback.</p>
+        {% else %}
+          <div style="font-size:3rem;margin-bottom:0.75rem;">🔒</div>
+          <span class="badge badge-closed" style="font-size:1rem;padding:8px 20px;">Closed</span>
+          <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;">This complaint has been officially closed.</p>
+        {% endif %}
+        <div style="margin-top:1rem;">
+          {% if complaint.priority == 'CRITICAL' %}
+            <span class="badge badge-critical"><i class="fas fa-exclamation-triangle"></i> CRITICAL Priority</span>
+          {% elif complaint.priority == 'High' %}
+            <span class="badge badge-high">High Priority</span>
+          {% else %}
+            <span class="badge badge-normal">Normal Priority</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESCRIPTION -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title"><i class="fas fa-align-left"></i> Description</div>
+    <p style="line-height:1.75;color:var(--text);">{{ complaint.description }}</p>
+  </div>
+
+  <!-- STATUS TIMELINE -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title"><i class="fas fa-history"></i> Status History</div>
+    {% if logs %}
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-title">Complaint Filed</div>
+        <div class="tl-meta">{{ complaint.filed_at.strftime('%d %b %Y, %H:%M') if complaint.filed_at else '' }} · Citizen</div>
+      </div>
+      {% for log in logs %}
+      <div class="tl-item {% if log.new_status in ('Resolved','Closed') %}resolved{% endif %}">
+        <div class="tl-dot"></div>
+        <div class="tl-title">{{ log.old_status }} → {{ log.new_status }}</div>
+        <div class="tl-meta">{{ log.changed_at.strftime('%d %b %Y, %H:%M') if log.changed_at else '' }} · {{ log.staff_name }}</div>
+        {% if log.note %}<div class="tl-note">{{ log.note }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--muted);font-size:0.88rem;">No status updates yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- FEEDBACK -->
+  {% if complaint.status in ('Resolved','Closed') %}
+  <div class="card">
+    <div class="card-title"><i class="fas fa-star"></i> Your Feedback</div>
+    {% if feedback %}
+      <div style="text-align:center;padding:1rem 0;">
+        <div class="stars" style="justify-content:center;margin-bottom:0.75rem;">
+          {% for i in range(1,6) %}
+            <span class="star {% if i <= feedback.rating %}active{% endif %}">★</span>
+          {% endfor %}
+        </div>
+        <p style="color:var(--muted);font-size:0.88rem;">You rated this {{ feedback.rating }}/5 stars</p>
+        {% if feedback.comments %}
+        <p style="margin-top:0.75rem;font-style:italic;color:var(--text);font-size:0.9rem;">"{{ feedback.comments }}"</p>
+        {% endif %}
+      </div>
+    {% else %}
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:1.25rem;">Help us improve by rating this resolution.</p>
+      <form method="POST" action="/citizen/feedback/{{ complaint.complaint_id }}">
+        <div class="form-group" style="text-align:center;">
+          <label class="form-label" style="text-align:center;display:block;">Your Rating <span class="req">*</span></label>
+          <div class="stars" style="justify-content:center;" id="starRow">
+            {% for i in range(1,6) %}
+            <span class="star" onclick="setRating({{ i }})" onmouseover="hoverRating({{ i }})" onmouseleave="leaveRating()">★</span>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="rating" id="ratingInput" value="0">
+          <div id="ratingLabel" style="font-size:0.8rem;color:var(--muted);margin-top:6px;"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Additional Comments (Optional)</label>
+          <textarea name="comments" class="form-control" rows="3" placeholder="Share your experience…"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" id="submitFeedback" disabled
+                style="width:100%;justify-content:center;padding:13px;opacity:0.5;">
+          <i class="fas fa-paper-plane"></i> Submit Feedback
+        </button>
+      </form>
+      <script>
+      let currentRating = 0;
+      const labels = ['','Poor','Fair','Good','Very Good','Excellent'];
+      function setRating(n) {
+        currentRating = n;
+        document.getElementById('ratingInput').value = n;
+        document.getElementById('ratingLabel').textContent = labels[n] + ' (' + n + '/5)';
+        document.getElementById('ratingLabel').style.color = 'var(--gold)';
+        updateStars(n);
+        const btn = document.getElementById('submitFeedback');
+        btn.disabled = false; btn.style.opacity = '1';
+      }
+      function hoverRating(n) { if (!currentRating) updateStars(n); }
+      function leaveRating() { if (!currentRating) updateStars(0); else updateStars(currentRating); }
+      function updateStars(n) {
+        document.querySelectorAll('#starRow .star').forEach((s,i) => {
+          s.classList.toggle('active', i < n);
+        });
+      }
+      </script>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

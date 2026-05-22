@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Manage Staff — LGC Portal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Staff <span class="gold">Management</span></h1>
+    <p>Add, view and manage government staff accounts</p>
+  </div>
+  <a href="/admin/dashboard" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Dashboard</a>
+</div>
+
+<div class="grid-2" style="align-items:start;">
+  <!-- ADD FORM -->
+  <div class="card">
+    <div class="card-title"><i class="fas fa-user-plus"></i> Add Staff Member</div>
+    {% if errors %}
+    <ul class="error-list">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    {% endif %}
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Full Name <span class="req">*</span></label>
+        <input type="text" name="full_name" class="form-control" placeholder="Staff Full Name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email <span class="req">*</span></label>
+        <input type="email" name="email" class="form-control" placeholder="staff@lgc.gov.pk" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password <span class="req">*</span></label>
+        <input type="password" name="password" class="form-control" placeholder="Min. 6 characters" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department <span class="req">*</span></label>
+        <select name="dept_id" class="form-control" required>
+          <option value="">— Select Department —</option>
+          {% for dept in departments %}
+          <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role <span class="req">*</span></label>
+        <select name="role" class="form-control">
+          <option value="staff">Staff</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
+        <i class="fas fa-plus"></i> Add Staff Member
+      </button>
+    </form>
+  </div>
+
+  <!-- STAFF LIST -->
+  <div class="card">
+    <div class="card-title"><i class="fas fa-users"></i> Current Staff ({{ staff_list|length }})</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Department</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+        <tbody>
+          {% for s in staff_list %}
+          <tr>
+            <td>
+              <div style="font-weight:600;">{{ s.full_name }}</div>
+              <div style="font-size:0.75rem;color:var(--muted);">{{ s.email }}</div>
+            </td>
+            <td>{{ s.dept_name }}</td>
+            <td>
+              {% if s.role == 'admin' %}
+                <span class="badge" style="background:rgba(200,168,75,0.1);color:var(--gold);border:1px solid rgba(200,168,75,0.25);">Admin</span>
+              {% else %}
+                <span class="badge badge-normal">Staff</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if s.is_active %}
+                <span class="badge badge-resolved">Active</span>
+              {% else %}
+                <span class="badge badge-closed">Inactive</span>
+              {% endif %}
+            </td>
+            <td style="color:var(--muted);font-size:0.8rem;">{{ s.created_at.strftime('%d %b %Y') if s.created_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Citizen Login — LGC Portal{% endblock %}
+{% block content %}
+<div style="max-width:420px;margin:4rem auto;">
+  <div style="text-align:center;margin-bottom:2rem;">
+    <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 1rem;">🏘</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;color:var(--text);">Citizen Login</h1>
+    <p style="color:var(--muted);font-size:0.9rem;margin-top:4px;">Sign in to access your complaint dashboard</p>
+  </div>
+  <div class="card">
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Email Address <span class="req">*</span></label>
+        <input type="email" name="email" class="form-control" placeholder="you@example.com" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password <span class="req">*</span></label>
+        <input type="password" name="password" class="form-control" placeholder="Your password" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;margin-top:0.5rem;">
+        <i class="fas fa-sign-in-alt"></i> Sign In
+      </button>
+    </form>
+    <hr class="divider">
+    <div style="text-align:center;font-size:0.87rem;color:var(--muted);">
+      Don't have an account? <a href="/register" style="color:var(--gold);font-weight:600;text-decoration:none;">Register here</a>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:1.5rem;font-size:0.85rem;color:var(--muted);">
+    <a href="/staff/login" style="color:var(--muted);text-decoration:none;">Staff / Admin Login →</a>
+  </div>
+</div>
+{% endblock %}

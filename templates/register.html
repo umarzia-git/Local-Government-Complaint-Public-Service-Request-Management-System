@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Register — LGC Portal{% endblock %}
+{% block extra_head %}
+<style>
+.auth-wrap {
+  max-width: 600px; margin: 3rem auto;
+}
+.auth-header { text-align: center; margin-bottom: 2rem; }
+.auth-header h1 {
+  font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+  color: var(--text); margin-bottom: 0.4rem;
+}
+.auth-header p { color: var(--muted); font-size: 0.9rem; }
+.cnic-preview {
+  font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700;
+  color: var(--gold); letter-spacing: 2px;
+  background: rgba(200,168,75,0.08); border: 1px solid rgba(200,168,75,0.2);
+  padding: 8px 14px; border-radius: 8px; margin-top: 8px;
+  display: none; text-align: center;
+}
+.input-icon-wrap { position: relative; }
+.input-icon-wrap .form-control { padding-left: 40px; }
+.input-icon-wrap .ico {
+  position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: 0.9rem;
+}
+.strength-bar {
+  height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08);
+  margin-top: 8px; overflow: hidden;
+}
+.strength-fill {
+  height: 100%; border-radius: 2px; width: 0;
+  transition: width 0.3s, background 0.3s;
+}
+.strength-text { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+.already { text-align: center; margin-top: 1.5rem; font-size: 0.87rem; color: var(--muted); }
+.already a { color: var(--gold); text-decoration: none; font-weight: 600; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-header">
+    <h1>Create Account</h1>
+    <p>Register to file and track government service complaints</p>
+  </div>
+
+  {% if errors %}
+  <ul class="error-list">
+    {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <div class="card">
+    <form method="POST" id="regForm" novalidate>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Full Name <span class="req">*</span></label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-user ico"></i>
+            <input type="text" name="full_name" class="form-control" placeholder="Muhammad Ali Khan"
+                   value="{{ form.get('full_name','') }}" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ward Number <span class="req">*</span></label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-map-marker-alt ico"></i>
+            <input type="text" name="ward_no" class="form-control" placeholder="e.g. Ward-5"
+                   value="{{ form.get('ward_no','') }}" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">CNIC <span class="req">*</span></label>
+        <div class="input-icon-wrap">
+          <i class="fas fa-id-card ico"></i>
+          <input type="text" name="cnic" id="cnicInput" class="form-control"
+                 placeholder="35201-1234567-1" maxlength="15"
+                 value="{{ form.get('cnic','') }}" required>
+        </div>
+        <div class="cnic-preview" id="cnicPreview"></div>
+        <div class="form-hint">Format: <strong>XXXXX-XXXXXXX-X</strong> (with dashes) or 13-digit plain number</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Email Address <span class="req">*</span></label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-envelope ico"></i>
+            <input type="email" name="email" class="form-control" placeholder="you@example.com"
+                   value="{{ form.get('email','') }}" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number <span class="req">*</span></label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-phone ico"></i>
+            <input type="text" name="phone" id="phoneInput" class="form-control"
+                   placeholder="03001234567" maxlength="11"
+                   value="{{ form.get('phone','') }}" required>
+          </div>
+          <div class="form-hint" id="phoneHint">Must start with <strong>0</strong> and be exactly 11 digits</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Home Address</label>
+        <textarea name="address" class="form-control" placeholder="Street, Area, City" rows="2">{{ form.get('address','') }}</textarea>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Password <span class="req">*</span></label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-lock ico"></i>
+            <input type="password" name="password" id="pwInput" class="form-control" placeholder="Min. 6 characters" required>
+          </div>
+          <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+          <div class="strength-text" id="strengthText"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password <span class="req">*</span></label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-lock ico"></i>
+            <input type="password" name="confirm_password" id="pwConfirm" class="form-control" placeholder="Repeat password" required>
+          </div>
+          <div class="form-hint" id="matchHint"></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;padding:14px;">
+        <i class="fas fa-user-plus"></i> Create Account
+      </button>
+    </form>
+  </div>
+
+  <div class="already">
+    Already have an account? <a href="/login">Sign in here</a>
+  </div>
+</div>
+
+<script>
+// ── CNIC auto-format ──
+const cnicInput = document.getElementById('cnicInput');
+const cnicPreview = document.getElementById('cnicPreview');
+
+cnicInput.addEventListener('input', function() {
+  let raw = this.value.replace(/\D/g,'');
+  let val = this.value;
+
+  // Auto-insert dashes
+  if (!val.includes('-')) {
+    if (raw.length > 12) {
+      val = raw.slice(0,5) + '-' + raw.slice(5,12) + '-' + raw.slice(12,13);
+      this.value = val;
+    } else if (raw.length > 5) {
+      val = raw.slice(0,5) + '-' + raw.slice(5);
+      this.value = val;
+    }
+  }
+
+  const dashed = /^\d{5}-\d{7}-\d{1}$/.test(this.value);
+  const plain  = /^\d{13}$/.test(raw);
+
+  if (dashed || plain) {
+    cnicPreview.style.display = 'block';
+    cnicPreview.textContent = '✓ Valid CNIC: ' + this.value;
+    cnicPreview.style.color = 'var(--emerald)';
+    cnicPreview.style.borderColor = 'rgba(16,185,129,0.3)';
+    this.classList.remove('error');
+  } else if (raw.length >= 13) {
+    cnicPreview.style.display = 'block';
+    cnicPreview.textContent = '✗ Invalid CNIC format';
+    cnicPreview.style.color = 'var(--rose)';
+    cnicPreview.style.borderColor = 'rgba(244,63,94,0.3)';
+    this.classList.add('error');
+  } else {
+    cnicPreview.style.display = 'none';
+    this.classList.remove('error');
+  }
+});
+
+// ── Phone validation ──
+const phoneInput = document.getElementById('phoneInput');
+const phoneHint  = document.getElementById('phoneHint');
+
+phoneInput.addEventListener('input', function() {
+  const val = this.value.replace(/\D/g,'');
+  this.value = val.slice(0, 11);
+  if (val.length === 11 && val.startsWith('0')) {
+    phoneHint.textContent = '✓ Valid Pakistan phone number';
+    phoneHint.style.color = 'var(--emerald)';
+    this.classList.remove('error');
+  } else if (val.length > 0 && !val.startsWith('0')) {
+    phoneHint.textContent = '✗ Phone must start with 0';
+    phoneHint.style.color = 'var(--rose)';
+    this.classList.add('error');
+  } else {
+    phoneHint.textContent = 'Must start with 0 and be exactly 11 digits';
+    phoneHint.style.color = '';
+    this.classList.remove('error');
+  }
+});
+
+// ── Password strength ──
+const pwInput = document.getElementById('pwInput');
+const strengthFill = document.getElementById('strengthFill');
+const strengthText = document.getElementById('strengthText');
+
+pwInput.addEventListener('input', function() {
+  const pw = this.value;
+  let strength = 0;
+  if (pw.length >= 6)  strength++;
+  if (pw.length >= 10) strength++;
+  if (/[A-Z]/.test(pw)) strength++;
+  if (/[0-9]/.test(pw)) strength++;
+  if (/[^A-Za-z0-9]/.test(pw)) strength++;
+  const levels = ['','Weak','Fair','Good','Strong','Very Strong'];
+  const colors = ['','var(--rose)','var(--amber)','#facc15','var(--emerald)','var(--sky)'];
+  strengthFill.style.width = (strength * 20) + '%';
+  strengthFill.style.background = colors[strength] || '';
+  strengthText.textContent = strength > 0 ? 'Strength: ' + levels[strength] : '';
+  strengthText.style.color = colors[strength] || '';
+});
+
+// ── Password match ──
+const pwConfirm = document.getElementById('pwConfirm');
+const matchHint = document.getElementById('matchHint');
+
+function checkMatch() {
+  if (!pwConfirm.value) { matchHint.textContent = ''; return; }
+  if (pwInput.value === pwConfirm.value) {
+    matchHint.textContent = '✓ Passwords match';
+    matchHint.style.color = 'var(--emerald)';
+    pwConfirm.classList.remove('error');
+  } else {
+    matchHint.textContent = '✗ Passwords do not match';
+    matchHint.style.color = 'var(--rose)';
+    pwConfirm.classList.add('error');
+  }
+}
+pwConfirm.addEventListener('input', checkMatch);
+pwInput.addEventListener('input', checkMatch);
+</script>
+{% endblock %}

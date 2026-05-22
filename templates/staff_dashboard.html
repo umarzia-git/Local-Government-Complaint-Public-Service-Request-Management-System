@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Staff Dashboard — LGC Portal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Staff Dashboard</h1>
+    <p>Manage complaints in your department · <span class="gold">{{ session.get('staff_name') }}</span></p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card gold">
+    <div class="stat-number">{{ stats.total }}</div>
+    <div class="stat-label">Total Assigned</div>
+    <i class="fas fa-tasks stat-icon"></i>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-number">{{ stats.received }}</div>
+    <div class="stat-label">Awaiting Action</div>
+    <i class="fas fa-inbox stat-icon"></i>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-number">{{ stats.in_progress }}</div>
+    <div class="stat-label">In Progress</div>
+    <i class="fas fa-spinner stat-icon"></i>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-number">{{ stats.resolved }}</div>
+    <div class="stat-label">Resolved</div>
+    <i class="fas fa-check stat-icon"></i>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title" style="justify-content:space-between;">
+    <span><i class="fas fa-list"></i> Complaints in Your Department</span>
+    <div style="display:flex;gap:8px;">
+      <select id="filterStatus" class="form-control" style="width:160px;padding:7px 12px;font-size:0.82rem;" onchange="filterTable()">
+        <option value="">All Statuses</option>
+        <option>Received</option>
+        <option>In Progress</option>
+        <option>Resolved</option>
+        <option>Closed</option>
+      </select>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="staffTable">
+      <thead>
+        <tr>
+          <th>Token</th>
+          <th>Citizen</th>
+          <th>Category</th>
+          <th>Ward</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>SLA Deadline</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in complaints %}
+        <tr data-status="{{ c.status }}">
+          <td><span class="token-pill">{{ c.token }}</span></td>
+          <td>{{ c.citizen_name }}</td>
+          <td>{{ c.category_name }}</td>
+          <td>{{ c.ward_no }}</td>
+          <td>
+            {% if c.status == 'Received' %}
+              <span class="badge badge-received">Received</span>
+            {% elif c.status == 'In Progress' %}
+              <span class="badge badge-progress">In Progress</span>
+            {% elif c.status == 'Resolved' %}
+              <span class="badge badge-resolved">Resolved</span>
+            {% else %}
+              <span class="badge badge-closed">Closed</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if c.priority == 'CRITICAL' %}
+              <span class="badge badge-critical">⚠ CRITICAL</span>
+            {% elif c.priority == 'High' %}
+              <span class="badge badge-high">High</span>
+            {% else %}
+              <span class="badge badge-normal">Normal</span>
+            {% endif %}
+          </td>
+          <td style="font-size:0.82rem;color:{% if c.sla_deadline and c.sla_deadline < now() and c.status not in ('Resolved','Closed') %}var(--rose){% else %}var(--muted){% endif %};">
+            {{ c.sla_deadline.strftime('%d %b %H:%M') if c.sla_deadline else '—' }}
+          </td>
+          <td>
+            <button class="btn btn-outline btn-sm" onclick="openUpdate({{ c.complaint_id }}, '{{ c.token }}', '{{ c.status }}')">
+              <i class="fas fa-edit"></i> Update
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- UPDATE MODAL -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;">
+  <div style="background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;width:440px;max-width:90vw;">
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;margin-bottom:0.25rem;font-size:1.3rem;">Update Status</h2>
+    <p id="modalToken" style="color:var(--gold);font-size:0.85rem;margin-bottom:1.5rem;"></p>
+    <form method="POST" id="updateForm">
+      <div class="form-group">
+        <label class="form-label">New Status <span class="req">*</span></label>
+        <select name="new_status" id="newStatus" class="form-control" required>
+          <option value="Received">Received</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note / Reason</label>
+        <textarea name="note" class="form-control" rows="3" placeholder="Brief note about this status change…"></textarea>
+      </div>
+      <div style="display:flex;gap:1rem;">
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">
+          <i class="fas fa-save"></i> Save Update
+        </button>
+        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openUpdate(id, token, status) {
+  document.getElementById('updateForm').action = '/staff/complaint/' + id + '/update';
+  document.getElementById('modalToken').textContent = 'Token: ' + token + '  ·  Current: ' + status;
+  document.getElementById('newStatus').value = status;
+  const modal = document.getElementById('modal');
+  modal.style.display = 'flex';
+}
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function filterTable() {
+  const val = document.getElementById('filterStatus').value;
+  document.querySelectorAll('#staffTable tbody tr').forEach(row => {
+    row.style.display = (!val || row.dataset.status === val) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

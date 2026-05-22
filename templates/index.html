@@ -1,245 +1,155 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CivicDesk</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar">
-        <a class="brand" href="#citizen" aria-label="CivicDesk">
-          <span class="brand-mark">CD</span>
-          <span>
-            <strong>CivicDesk</strong>
-            <small>Local service requests</small>
-          </span>
-        </a>
+{% extends "base.html" %}
+{% block title %}LGC Portal — Local Government Complaint System{% endblock %}
+{% block extra_head %}
+<style>
+.hero {
+  min-height: 88vh; display: flex; align-items: center; justify-content: center;
+  text-align: center; position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 800px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(200,168,75,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-crest {
+  width: 90px; height: 90px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  border-radius: 20px; display: flex; align-items: center; justify-content: center;
+  font-size: 40px; color: var(--navy); margin: 0 auto 1.5rem;
+  box-shadow: 0 20px 60px rgba(200,168,75,0.3);
+  animation: floatIn 0.6s ease;
+}
+.hero h1 {
+  font-family: 'Syne', sans-serif; font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 800; color: var(--text); line-height: 1.1;
+  margin-bottom: 1rem;
+  animation: floatIn 0.6s ease 0.1s both;
+}
+.hero h1 em { color: var(--gold); font-style: normal; }
+.hero p {
+  font-size: 1.1rem; color: var(--muted); max-width: 560px; margin: 0 auto 2.5rem;
+  line-height: 1.7; animation: floatIn 0.6s ease 0.2s both;
+}
+.hero-actions {
+  display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+  animation: floatIn 0.6s ease 0.3s both;
+}
+.hero-actions .btn { padding: 14px 28px; font-size: 1rem; }
 
-        <nav class="portal-nav" aria-label="Portals">
-          <button class="active" type="button" data-portal-target="citizen">Citizen Portal</button>
-          <button type="button" data-portal-target="staff">Staff Portal</button>
-          <button type="button" data-portal-target="admin">Admin Portal</button>
-        </nav>
+.features {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem; margin-top: 5rem;
+}
+.feature-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.75rem;
+  text-align: left; transition: all 0.3s;
+}
+.feature-card:hover {
+  border-color: rgba(200,168,75,0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+}
+.feature-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; margin-bottom: 1rem;
+}
+.feature-icon.gold   { background: rgba(200,168,75,0.12); color: var(--gold); }
+.feature-icon.green  { background: rgba(16,185,129,0.12); color: var(--emerald); }
+.feature-icon.blue   { background: rgba(56,189,248,0.12);  color: var(--sky); }
+.feature-icon.red    { background: rgba(244,63,94,0.12);   color: var(--rose); }
+.feature-card h3 {
+  font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.5rem;
+}
+.feature-card p { font-size: 0.87rem; color: var(--muted); line-height: 1.6; }
 
-        <div class="connection-card">
-          <span class="eyebrow">Data Source</span>
-          <strong id="sourceLabel">Checking</strong>
-          <small id="sourceDetail">Connecting to service</small>
-        </div>
-      </aside>
+.portal-links {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+  margin-top: 4rem;
+}
+.portal-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 2rem;
+  text-decoration: none; color: var(--text); transition: all 0.3s;
+  position: relative; overflow: hidden;
+}
+.portal-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(200,168,75,0.05), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.portal-card:hover { border-color: rgba(200,168,75,0.3); transform: translateY(-3px); }
+.portal-card:hover::after { opacity: 1; }
+.portal-card h2 {
+  font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+.portal-card p { font-size: 0.88rem; color: var(--muted); }
+.portal-card .arrow {
+  font-size: 1.3rem; color: var(--gold); margin-top: 1.25rem;
+  display: block; transition: transform 0.2s;
+}
+.portal-card:hover .arrow { transform: translateX(6px); }
 
-      <main class="main">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow" id="portalEyebrow">Citizen Portal</p>
-            <h1 id="portalTitle">File and Track Requests</h1>
-          </div>
-          <div class="topbar-actions">
-            <div class="search-wrap">
-              <label for="searchInput">Search</label>
-              <input id="searchInput" type="search" placeholder="Token, citizen, ward">
-            </div>
-            <button class="btn primary" id="refreshButton" type="button">Refresh</button>
-          </div>
-        </header>
-
-        <section class="portal active" id="citizen" data-portal="citizen">
-          <section class="work-grid">
-            <form class="panel span-4 intake-form" id="intake">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Citizen Desk</p>
-                  <h2>New Request</h2>
-                </div>
-              </div>
-              <label>
-                Citizen
-                <select id="citizenSelect" name="citizen_id" required></select>
-              </label>
-              <label>
-                Category
-                <select id="categorySelect" name="category_id" required></select>
-              </label>
-              <label>
-                Ward
-                <input id="wardInput" name="ward_no" type="text" placeholder="Ward-5">
-              </label>
-              <label>
-                Priority
-                <select name="priority">
-                  <option>Normal</option>
-                  <option>High</option>
-                  <option>CRITICAL</option>
-                </select>
-              </label>
-              <label>
-                Description
-                <textarea name="description" rows="5" placeholder="Describe the issue" required></textarea>
-              </label>
-              <button class="btn primary full" type="submit">Submit Request</button>
-              <p class="form-message" id="formMessage" role="status"></p>
-            </form>
-
-            <div class="panel span-8">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">My Requests</p>
-                  <h2>Tracking</h2>
-                </div>
-                <div class="field-inline">
-                  <label for="citizenTrackSelect">Citizen</label>
-                  <select id="citizenTrackSelect"></select>
-                </div>
-              </div>
-              <div class="request-grid" id="citizenRequests"></div>
-            </div>
-          </section>
-        </section>
-
-        <section class="portal" id="staff" data-portal="staff">
-          <section class="metric-grid compact" aria-label="Staff metrics">
-            <article class="metric">
-              <span>Assigned</span>
-              <strong id="staffAssigned">0</strong>
-              <small>open requests</small>
-            </article>
-            <article class="metric danger">
-              <span>SLA</span>
-              <strong id="staffBreaches">0</strong>
-              <small>needs attention</small>
-            </article>
-            <article class="metric">
-              <span>Resolved</span>
-              <strong id="staffResolved">0</strong>
-              <small>completed</small>
-            </article>
-          </section>
-
-          <section class="work-grid">
-            <div class="panel span-12" id="complaints">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Staff Queue</p>
-                  <h2>Assigned Complaints</h2>
-                </div>
-                <div class="filter-row">
-                  <div class="field-inline">
-                    <label for="staffDeptSelect">Department</label>
-                    <select id="staffDeptSelect"></select>
-                  </div>
-                  <div class="segmented" role="tablist" aria-label="Status filter">
-                    <button class="active" type="button" data-status="All">All</button>
-                    <button type="button" data-status="Received">Received</button>
-                    <button type="button" data-status="In Progress">In Progress</button>
-                    <button type="button" data-status="Resolved">Resolved</button>
-                  </div>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Token</th>
-                      <th>Citizen</th>
-                      <th>Issue</th>
-                      <th>Ward</th>
-                      <th>Status</th>
-                      <th>Deadline</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody id="complaintsBody"></tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-        </section>
-
-        <section class="portal" id="admin" data-portal="admin">
-          <section class="metric-grid" aria-label="System metrics">
-            <article class="metric">
-              <span>Total</span>
-              <strong id="totalComplaints">0</strong>
-              <small>complaints filed</small>
-            </article>
-            <article class="metric">
-              <span>Open</span>
-              <strong id="openComplaints">0</strong>
-              <small>active requests</small>
-            </article>
-            <article class="metric danger">
-              <span>SLA</span>
-              <strong id="slaBreaches">0</strong>
-              <small>breaches</small>
-            </article>
-            <article class="metric">
-              <span>Rating</span>
-              <strong id="avgRating">0.0</strong>
-              <small>average score</small>
-            </article>
-          </section>
-
-          <section class="work-grid" id="performance">
-            <div class="panel span-6">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Departments</p>
-                  <h2>Performance</h2>
-                </div>
-              </div>
-              <div class="kpi-list" id="departmentKpi"></div>
-            </div>
-
-            <div class="panel span-6" id="risk">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Risk</p>
-                  <h2>Ward Heatmap</h2>
-                </div>
-              </div>
-              <div class="heatmap" id="wardHeatmap"></div>
-            </div>
-          </section>
-
-          <section class="work-grid">
-            <div class="panel span-7">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Recurring</p>
-                  <h2>Chronic Issues</h2>
-                </div>
-              </div>
-              <div class="issue-list" id="chronicIssues"></div>
-            </div>
-
-            <div class="panel span-5 model-panel">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Schema</p>
-                  <h2>Data Model</h2>
-                </div>
-              </div>
-              <img src="/assets/erd" alt="Entity relationship diagram">
-            </div>
-          </section>
-        </section>
-      </main>
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media(max-width: 600px) { .portal-links { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="hero">
+  <div>
+    <div class="hero-crest">⚖</div>
+    <h1>Public Service &amp; <em>Complaint</em><br>Management Portal</h1>
+    <p>File complaints, track resolution progress, and hold your local government accountable — transparently and digitally.</p>
+    <div class="hero-actions">
+      <a href="/register" class="btn btn-primary"><i class="fas fa-user-plus"></i> Register as Citizen</a>
+      <a href="/track" class="btn btn-outline"><i class="fas fa-search"></i> Track by Token</a>
+      <a href="/login" class="btn btn-outline"><i class="fas fa-sign-in-alt"></i> Sign In</a>
     </div>
 
-    <template id="statusActionTemplate">
-      <div class="status-action">
-        <select aria-label="Status">
-          <option>Received</option>
-          <option>In Progress</option>
-          <option>Resolved</option>
-          <option>Closed</option>
-        </select>
-        <button class="btn compact" type="button">Update</button>
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon gold"><i class="fas fa-file-alt"></i></div>
+        <h3>File Complaints</h3>
+        <p>Submit service requests for water, roads, electricity, or waste management issues in your ward.</p>
       </div>
-    </template>
+      <div class="feature-card">
+        <div class="feature-icon blue"><i class="fas fa-route"></i></div>
+        <h3>Real-Time Tracking</h3>
+        <p>Track your complaint status with a unique token. Get live updates as departments act.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon green"><i class="fas fa-chart-line"></i></div>
+        <h3>SLA Monitoring</h3>
+        <p>Every complaint has a Service Level Agreement deadline. Escalations happen automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon red"><i class="fas fa-star"></i></div>
+        <h3>Feedback & Ratings</h3>
+        <p>Rate resolved complaints and contribute to public satisfaction performance reports.</p>
+      </div>
+    </div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-  </body>
-</html>
+    <div class="portal-links">
+      <a href="/login" class="portal-card">
+        <h2>🏘 Citizen Portal</h2>
+        <p>Register, file complaints, track status, and submit feedback on public services.</p>
+        <span class="arrow">→</span>
+      </a>
+      <a href="/staff/login" class="portal-card">
+        <h2>🏛 Staff / Admin Portal</h2>
+        <p>Manage complaints, update statuses, view department KPIs and ward risk heatmaps.</p>
+        <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
