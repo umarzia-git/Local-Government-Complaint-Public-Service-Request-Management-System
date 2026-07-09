@@ -124,4 +124,4 @@ The app will be available at `http://localhost:5000`.
 ## Built By
 
 - **Umar Zia** — [github.com/umarzia-git](https://github.com/umarzia-git)
-- **Yahya Usman**
+- **Yahya Usman**— [github.com/yahyausman](https://github.com/yahyausman)
