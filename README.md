@@ -111,7 +111,6 @@ The app will be available at `http://localhost:5000`.
 
 ## Screenshots
 
-> Screenshots coming soon.
 
 | Page | Preview |
 |---|---|
