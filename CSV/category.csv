@@ -1,9 +1,0 @@
-category_id,category_name,dept_id,sla_hours
-1,Water Supply Issue,1,48
-2,Sewage / Drainage,1,72
-3,Road Damage,2,96
-4,Illegal Encroachment,2,120
-5,Street Light Fault,3,24
-6,Transformer Issue,3,48
-7,Garbage Collection,4,48
-8,Open Drain / Nullah,4,72

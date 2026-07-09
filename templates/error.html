@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }} — LGC Portal{% endblock %}
+{% block content %}
+<div style="max-width:600px;margin:4rem auto;text-align:center;">
+  <div style="font-family:'Syne',sans-serif;font-size:4rem;font-weight:800;color:var(--gold);">{{ code }}</div>
+  <p style="color:var(--muted);margin-top:0.5rem;font-size:1.05rem;">{{ message }}</p>
+  <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top:1.5rem;">Back to Home</a>
+</div>
+{% endblock %}

@@ -1,9 +1,13 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import pymysql
 import hashlib
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import re, uuid
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ── Dual password verification (SHA256 from CSV + Werkzeug from Flask registration) ──
 def verify_password(stored_hash, provided_password):
@@ -13,14 +17,14 @@ def verify_password(stored_hash, provided_password):
     return stored_hash.lower() == sha256.lower()
 
 app = Flask(__name__)
-app.secret_key = 'lgc_secret_key_2026'
+app.secret_key = os.environ['SECRET_KEY']
 app.jinja_env.globals['now'] = datetime.now
 
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'Umerzia600',
-    'database': 'lgc_system',
+    'host': os.environ.get('DB_HOST', 'localhost'),
+    'user': os.environ.get('DB_USER', 'root'),
+    'password': os.environ['DB_PASSWORD'],
+    'database': os.environ.get('DB_NAME', 'lgc_system'),
     'cursorclass': pymysql.cursors.DictCursor,
     'charset': 'utf8mb4'
 }
@@ -492,5 +496,19 @@ def track():
             flash('No complaint found with that token.', 'warning')
     return render_template('track.html', complaint=complaint, logs=logs)
 
+# ─── HEALTH CHECK ────────────────────────────────────────────────
+@app.route('/health')
+def health():
+    return jsonify({"status": "ok"})
+
+# ─── ERROR HANDLERS ──────────────────────────────────────────────
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('error.html', code=404, message='Page not found.'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('error.html', code=500, message='Something went wrong. Please try again later.'), 500
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)

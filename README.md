@@ -1,143 +1,98 @@
-# Local Government Complaint & Public Service Request Management System
+# LGC System — Local Government Complaint Management System
 
-> A web-based complaint management system for local government (tehsil/municipal level). Citizens file complaints about civic issues, staff resolves them, and admins monitor performance through automated analytics.
+A full-stack web application that lets citizens file and track complaints about civic issues (water supply, road damage, electricity, sanitation), while staff resolve them and admins monitor department performance through automated analytics and dashboards.
+
+Built as a database-driven Flask application backed by MySQL, with SQL views and triggers doing the heavy lifting for KPI reporting and recurring-issue detection.
 
 ---
 
-## Group Information
+## Features
 
-| Field | Details |
+- **Role-based access** — separate login flows and dashboards for Citizens, Staff, and Admins
+- **Complaint management** — citizens file complaints against a category/department, track status, and submit feedback after resolution
+- **Public complaint tracking** — anyone can track a complaint's status using its token, no login required
+- **SLA tracking** — every complaint gets an SLA deadline based on its category; breaches are tracked automatically
+- **Admin dashboards** — department KPIs, ward-level risk heatmap, chronic/recurring issue detection, and citizen satisfaction ratings
+- **Chart.js visualizations** — visual breakdown of complaint status, department performance, and ward risk on the admin dashboard
+- **Staff management** — admins can add, deactivate, and reactivate staff accounts
+- **Automated SQL triggers** — auto-detects recurring complaints in the same ward/category and flags them as chronic issues; auto-prompts citizens for feedback once a complaint is resolved
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
 |---|---|
-| **Group Members** | Omer Zia - [umarzia-git](https://github.com/umarzia-git) &nbsp;\|&nbsp; Yahya Usman - [yahyausman](https://github.com/yahyausman) |
-| **Program & Group** | BSCS - Group A |
-| **Institution** | IMSciences |
-| **Course** | Database Systems Lab - Semester Project |
+| Backend | Flask (Python) |
+| Database | MySQL |
+| Frontend | HTML, CSS, JavaScript |
+| Charts | Chart.js |
+| Auth | Werkzeug password hashing |
+| Deployment | Gunicorn + Railway |
 
 ---
 
-## Project Overview
+## Demo Credentials
 
-Citizens report civic issues (water supply, road damage, electricity, sanitation) through this system. Staff members resolve assigned complaints, and admins track department-level KPIs and recurring problem areas through automated views and triggers.
+Seed the demo accounts locally with `python seed_demo.py`, then log in with:
 
-**Type:** Web-based system  
-**Database:** MySQL 8.0  
-**ERD Tool:** MySQL Workbench  
-**Data Generation:** Python (Faker library)
-
----
-
-## ERD
-
-![ERD Updated](ERD/ERD2.png)
-
-> Initial ERD: `ERD/ERD Diagram.png` | Final normalized ERD: `ERD/ERD2.png`
-
----
-
-## Repository Structure
-
-```
-DBLab_Project/
-│
-├── ERD/
-│   ├── erd_v1.png                  ← Initial ERD (Milestone 1)
-│   └── erd_updated.png             ← Updated ERD after normalization (Milestone 2)
-│
-├── Normalization/
-│   └── NORMALIZATION.md            ← 1NF → 2NF → 3NF with justifications
-│
-├── Dataflow/
-│   └── dataflow.md                 ← How data enters, moves, and exits the system
-│
-├── CSV/
-│   ├── department.csv              ← 4 rows
-│   ├── category.csv                ← 8 rows
-│   ├── citizen.csv                 ← 80 rows
-│   ├── staff.csv                   ← 20 rows
-│   ├── complaint.csv               ← 100 rows
-│   ├── status_log.csv              ← 150 rows
-│   ├── complaint_feedback.csv      ← ~50 rows
-│   └── chronic_issue.csv           ← 20 rows
-│
-├── SQL/
-│   ├── ddl.sql                     ← CREATE TABLE + indexes + triggers + views
-│   ├── dml.sql                     ← INSERT + UPDATE + DELETE statements
-│   └── validation_queries.sql      ← COUNT, NULL check, FK integrity, JOINs
-│
-├── Docs/
-│   └── Final_PDF.pdf               ← Compiled submission PDF
-│
-└── README.md
-```
-
----
-
-## Database Schema - 8 Tables
-
-| Table | Rows | Description |
+| Role | Email | Password |
 |---|---|---|
-| `department` | 4 | Government departments |
-| `category` | 8 | Complaint types mapped to departments |
-| `citizen` | 80 | Registered citizens |
-| `staff` | 20 | Department employees |
-| `complaint` | 100 | Core complaint records |
-| `status_log` | 150 | Audit trail of every status change |
-| `complaint_feedback` | ~50 | Citizen ratings after resolution |
-| `chronic_issue` | 20 | Auto-detected recurring problem areas |
+| Citizen | `citizen@demo.com` | `demo123` |
+| Staff | `staff@demo.com` | `demo123` |
+| Admin | `admin@demo.com` | `admin123` |
 
 ---
 
-## How to Run
+## How to Run Locally
 
-**Step 1 - Create the database and tables:**
-```sql
-source SQL/ddl.sql
+**1. Clone the repository**
+```bash
+git clone <your-repo-url>
+cd lgc-system
 ```
 
-**Step 2 - Insert sample data:**
-```sql
-source SQL/dml.sql
+**2. Create a virtual environment and install dependencies**
+```bash
+python -m venv venv
+venv\Scripts\activate        # Windows
+source venv/bin/activate     # macOS/Linux
+pip install -r requirements.txt
 ```
 
-**Step 3 - Run validation queries:**
+**3. Set up the database**
 ```sql
-source SQL/validation_queries.sql
+source schema.sql
 ```
 
-> All scripts are designed to run in sequence. `ddl.sql` drops and recreates the database automatically.
+**4. Configure environment variables**
+
+Copy `.env.example` to `.env` and fill in your local MySQL credentials:
+```bash
+cp .env.example .env
+```
+
+**5. Seed demo accounts**
+```bash
+python seed_demo.py
+```
+
+**6. Run the app**
+```bash
+python app.py
+```
+
+The app will be available at `http://localhost:5000`.
 
 ---
 
-## Innovation Features
+## Screenshots
 
-### Innovation 1 - Ward Risk Heatmap
-A SQL view (`v_ward_heatmap`) computes a weighted risk score per ward based on open complaints, SLA breaches, and citizen satisfaction. Helps admins identify high-risk areas at a glance.
+> _Add screenshots here once available._
 
-### Innovation 2 - Auto-Escalation Trigger
-`trg_detect_recurring` fires on every complaint INSERT. If 3 or more same-category complaints appear in the same ward within 7 days, the system automatically creates a `chronic_issue` record to flag the recurring problem.
-
-### Innovation 3 - Citizen KPI Feedback Loop
-`trg_feedback_on_resolve` fires when a complaint status changes to Resolved. It sets `feedback_pending = 1` so the citizen is prompted to submit a rating. Ratings are aggregated in `v_department_kpi` view for admin reporting.
-
----
-
-## Technology Stack
-
-| Tool | Purpose |
+| Page | Preview |
 |---|---|
-| MySQL 8.0 | Primary database |
-| MySQL Workbench | ERD design and schema visualization |
-| Python (Faker) | Synthetic data generation |
-| Git + GitHub | Version control and collaboration |
-
----
-
-## Milestones
-
-| Milestone | Description |
-|---|---|
-| M1 | Initial ERD and schema designed |
-| M2 | Applied 1NF–3NF normalization, updated ERD and schema |
-| M3 | Synthetic data generated; dataflow documented |
-| M4 | DDL scripts added, EER diagram verified |
-| M5 | Data populated, validation queries added |
+| Citizen Dashboard | _placeholder_ |
+| Staff Dashboard | _placeholder_ |
+| Admin Dashboard | _placeholder_ |
+| Complaint Tracking | _placeholder_ |
